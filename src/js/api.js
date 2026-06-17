@@ -89,6 +89,38 @@ export async function buildPool(config) {
   return chosen.map((p) => ({ id: p.id, name: p.name, image: spriteUrl(p.id) }))
 }
 
+// Hämta och cacha en lista med sprites (för medvetet offline-nedladdning).
+// Service workern (CacheFirst) lägger dem i cachen; redan cachade går direkt.
+// onProgress(klar, totalt) anropas löpande. Returnerar antal som misslyckades.
+export async function cacheSprites(ids, onProgress) {
+  let done = 0
+  let failed = 0
+  const CONCURRENCY = 8
+  const queue = ids.slice()
+  async function worker() {
+    while (queue.length) {
+      const id = queue.shift()
+      try {
+        const res = await fetch(spriteUrl(id))
+        await res.blob()
+        if (!res.ok) failed++
+      } catch {
+        failed++
+      }
+      done++
+      onProgress && onProgress(done, ids.length)
+    }
+  }
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker))
+  return failed
+}
+
+export function idsForGeneration(gen) {
+  const out = []
+  for (let i = gen.from; i <= gen.to; i++) out.push(i)
+  return out
+}
+
 // Förladda bilder så de hinner cachas innan spelet visas.
 export function preloadImages(urls) {
   return Promise.all(

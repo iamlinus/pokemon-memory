@@ -1,6 +1,6 @@
 // UI: bygger och växlar mellan skärmarna (start → spelplan → resultat).
 import { TYPES, GENERATIONS, PAIR_OPTIONS, prettyName } from './data.js'
-import { buildPool, getAllPokemon, spriteUrl, preloadImages } from './api.js'
+import { buildPool, getAllPokemon, spriteUrl, preloadImages, cacheSprites, idsForGeneration } from './api.js'
 import { createGame, columnsFor, formatTime } from './game.js'
 import { sound } from './sound.js'
 import { confettiBurst } from './confetti.js'
@@ -80,9 +80,11 @@ function muteButton() {
 export function screenSetup() {
   const screen = el('div', { class: 'screen setup' })
 
+  const offlineBtn = el('button', { class: 'icon-btn', title: 'Ladda ner för offline', 'aria-label': 'Ladda ner för offline' }, '⤓')
+  offlineBtn.addEventListener('click', () => { sound.unlock(); openOfflineModal() })
   const header = el('header', { class: 'app-header' },
     el('div', { class: 'logo' }, el('span', { class: 'pokeball-mini' }), el('h1', {}, 'Pokémon Memory')),
-    muteButton(),
+    el('div', { class: 'header-btns' }, offlineBtn, muteButton()),
   )
 
   // -- Spelare --
@@ -342,6 +344,59 @@ async function openManualPicker(onClose) {
   }
   renderGrid()
   refreshConfirm()
+}
+
+// =================== OFFLINE-NEDLADDNING ===================
+function openOfflineModal() {
+  const overlay = el('div', { class: 'overlay' })
+  const panel = el('div', { class: 'picker offline-panel' })
+  const closeBtn = el('button', { class: 'icon-btn' }, '✕')
+  closeBtn.addEventListener('click', () => overlay.remove())
+
+  // En nedladdningskontroll (progressbar + knapp) för en uppsättning id:n.
+  function downloadControl(ids, storageKey) {
+    const fill = el('span', { class: 'dl-fill' })
+    const bar = el('div', { class: 'dl-bar' }, fill)
+    const btn = el('button', { class: 'btn-secondary dl-btn' })
+    const setDone = () => { btn.textContent = '✓ Nedladdat'; btn.classList.add('done'); fill.style.width = '100%' }
+    if (localStorage.getItem(storageKey) === '1') setDone()
+    else btn.textContent = 'Hämta'
+    btn.addEventListener('click', async () => {
+      if (btn.disabled) return
+      btn.disabled = true
+      btn.classList.remove('done')
+      btn.textContent = '0%'
+      const failed = await cacheSprites(ids, (d, t) => {
+        const pct = Math.round((d / t) * 100)
+        fill.style.width = pct + '%'
+        btn.textContent = pct + '%'
+      })
+      btn.disabled = false
+      if (failed === 0) { localStorage.setItem(storageKey, '1'); setDone(); sound.match() }
+      else { btn.textContent = '⚠ Försök igen'; fill.style.width = '0%' }
+    })
+    return el('div', { class: 'dl-control' }, bar, btn)
+  }
+
+  const rows = GENERATIONS.map((g) =>
+    el('div', { class: 'offline-row' },
+      el('div', { class: 'offline-info' }, el('strong', {}, 'Gen ' + g.gen), el('small', {}, g.region + ' · ' + (g.to - g.from + 1) + ' st')),
+      downloadControl(idsForGeneration(g), 'pm_offline_gen_' + g.gen),
+    ),
+  )
+  const allIds = GENERATIONS.flatMap(idsForGeneration)
+  const allRow = el('div', { class: 'offline-row all' },
+    el('div', { class: 'offline-info' }, el('strong', {}, 'Alla Pokémon'), el('small', {}, allIds.length + ' st · stor nedladdning')),
+    downloadControl(allIds, 'pm_offline_all'),
+  )
+
+  panel.append(
+    el('div', { class: 'picker-head' }, el('h2', {}, 'Spela offline'), closeBtn),
+    el('p', { class: 'hint-text' }, 'Ladda ner Pokémon-bilder medan du har internet – sen funkar spelet utan uppkoppling. Behöver bara göras en gång.'),
+    el('div', { class: 'picker-scroll' }, el('div', { class: 'offline-list' }, rows, allRow)),
+  )
+  overlay.append(panel)
+  document.body.append(overlay)
 }
 
 // =================== LADDNING ===================

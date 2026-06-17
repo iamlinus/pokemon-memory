@@ -84,6 +84,26 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   text-shadow: 2px 2px 0 #fff, 3px 3px 0 var(--blue);
 }
 
+.header-btns { display: flex; gap: 8px; }
+
+/* ---------- Offline-nedladdning ---------- */
+.offline-panel .hint-text { text-align: left; margin: 4px 0 12px; }
+.offline-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
+.offline-row {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 14px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(0, 0, 0, .1);
+}
+.offline-row.all { border: 2px solid var(--yellow); }
+.offline-info { flex: 1; display: flex; flex-direction: column; }
+.offline-info strong { font-size: 1.05rem; }
+.offline-info small { color: #999; }
+.dl-control { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 150px; flex: none; }
+.dl-bar { height: 8px; border-radius: 999px; background: #eee; overflow: hidden; }
+.dl-fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), #4f9bff); transition: width .2s ease; }
+.dl-btn { padding: 8px 10px; font-size: .9rem; }
+.dl-btn.done { color: #2e8b57; border-color: #3fc94e; }
+.dl-btn:disabled { opacity: .8; }
+
 /* ---------- Pokéboll (ren CSS) ---------- */
 .pokeball-face, .pokeball-mini, .pokeball-spin {
   display: inline-block; border-radius: 50%;
