@@ -1,0 +1,22 @@
+{
+  "name": "pokemon-memory",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Pokémon Memory – ett memoryspel för 1–2 spelare byggt på PokeAPI. PWA med offline-stöd.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "icons": "pwa-assets-generator --preset minimal-2023 public/pokeball.svg"
+  },
+  "devDependencies": {
+    "@vite-pwa/assets-generator": "^0.2.6",
+    "vite": "^5.4.10",
+    "vite-plugin-pwa": "^0.20.5"
+  },
+  "dependencies": {
+    "@fontsource/fredoka": "^5.1.0",
+    "@fontsource/press-start-2p": "^5.1.0"
+  }
+}
