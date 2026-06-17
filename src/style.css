@@ -85,6 +85,37 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .header-btns { display: flex; gap: 8px; }
+.icon-btn.has-offline { position: relative; }
+.icon-btn.has-offline::after {
+  content: ''; position: absolute; top: 4px; right: 4px; width: 11px; height: 11px;
+  border-radius: 50%; background: #3fc94e; border: 2px solid #fff;
+}
+
+/* ---------- Offline-banner / status ---------- */
+.banner-slot:empty { display: none; }
+.offline-status { border-radius: 14px; margin-bottom: 16px; animation: pop-in .4s ease; }
+.offline-status.ready {
+  background: #e8f9ec; color: #1f7a37; font-weight: 600; padding: 10px 16px;
+  border: 2px solid #bdebc8; font-size: .95rem;
+}
+.offline-status.tip {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  background: linear-gradient(135deg, #fff, #fff3cc); border: 2px solid var(--yellow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+}
+.tip-icon {
+  flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--blue); color: #fff;
+  display: grid; place-items: center; font-size: 1.4rem; font-weight: 700;
+}
+.tip-text { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+.tip-text strong { color: var(--blue-dark); }
+.tip-text small { color: #8a7a3a; }
+.tip-dl {
+  flex: none; background: var(--blue); color: #fff; font-weight: 700; font-size: .9rem;
+  padding: 8px 14px; border-radius: 999px; box-shadow: 0 3px 0 rgba(0, 0, 0, .12); transition: transform .12s ease;
+}
+.tip-dl:active { transform: translateY(2px); }
+.tip-x { flex: none; width: 30px; height: 30px; border-radius: 50%; color: #999; font-size: 1rem; }
 
 /* ---------- Offline-nedladdning ---------- */
 .offline-panel .hint-text { text-align: left; margin: 4px 0 12px; }

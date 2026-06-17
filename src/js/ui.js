@@ -81,11 +81,35 @@ export function screenSetup() {
   const screen = el('div', { class: 'screen setup' })
 
   const offlineBtn = el('button', { class: 'icon-btn', title: 'Ladda ner för offline', 'aria-label': 'Ladda ner för offline' }, '⤓')
-  offlineBtn.addEventListener('click', () => { sound.unlock(); openOfflineModal() })
+  offlineBtn.addEventListener('click', () => { sound.unlock(); openOfflineModal(renderBanner) })
   const header = el('header', { class: 'app-header' },
     el('div', { class: 'logo' }, el('span', { class: 'pokeball-mini' }), el('h1', {}, 'Pokémon Memory')),
     el('div', { class: 'header-btns' }, offlineBtn, muteButton()),
   )
+
+  // Offline-banner/status högst upp – tips första gången, annars vad som är nedladdat.
+  const bannerSlot = el('div', { class: 'banner-slot' })
+  function renderBanner() {
+    bannerSlot.innerHTML = ''
+    const status = offlineStatus()
+    offlineBtn.classList.toggle('has-offline', status.ready)
+    if (status.ready) {
+      bannerSlot.append(el('div', { class: 'offline-status ready' }, '✓ ' + status.text))
+      return
+    }
+    if (localStorage.getItem('pm_offline_tip_dismissed') === '1') return
+    const dl = el('button', { class: 'tip-dl' }, 'Ladda ner')
+    dl.addEventListener('click', () => { sound.unlock(); openOfflineModal(renderBanner) })
+    const x = el('button', { class: 'tip-x', 'aria-label': 'Stäng' }, '✕')
+    x.addEventListener('click', () => { localStorage.setItem('pm_offline_tip_dismissed', '1'); renderBanner() })
+    bannerSlot.append(
+      el('div', { class: 'offline-status tip' },
+        el('span', { class: 'tip-icon' }, '⤓'),
+        el('div', { class: 'tip-text' }, el('strong', {}, 'Spela offline'), el('small', {}, 'Ladda ner Pokémon medan du har internet.')),
+        dl, x,
+      ),
+    )
+  }
 
   // -- Spelare --
   const modeBtns = ['single', 'duo'].map((m) =>
@@ -238,9 +262,11 @@ export function screenSetup() {
   renderNames()
   renderMethodPanel()
 
+  renderBanner()
   screen.append(
     header,
     el('div', { class: 'setup-body' },
+      bannerSlot,
       el('section', { class: 'card-section' }, el('h2', {}, 'Spelare'), el('div', { class: 'mode-row' }, modeBtns), namesWrap),
       el('section', { class: 'card-section' }, el('h2', {}, 'Antal brickor'), el('div', { class: 'chip-row' }, pairChips)),
       el('section', { class: 'card-section' }, el('h2', {}, 'Vilka Pokémon?'), el('div', { class: 'method-row' }, methodBtns), methodPanel),
@@ -347,11 +373,21 @@ async function openManualPicker(onClose) {
 }
 
 // =================== OFFLINE-NEDLADDNING ===================
-function openOfflineModal() {
+// Vad är nedladdat? Läser av localStorage. Returnerar { ready, text }.
+function offlineStatus() {
+  if (localStorage.getItem('pm_offline_all') === '1') {
+    return { ready: true, text: 'Alla Pokémon nedladdade – funkar offline 🎉' }
+  }
+  const gens = GENERATIONS.filter((g) => localStorage.getItem('pm_offline_gen_' + g.gen) === '1').map((g) => 'Gen ' + g.gen)
+  if (gens.length) return { ready: true, text: gens.join(', ') + ' redo för offline' }
+  return { ready: false }
+}
+
+function openOfflineModal(onChange) {
   const overlay = el('div', { class: 'overlay' })
   const panel = el('div', { class: 'picker offline-panel' })
   const closeBtn = el('button', { class: 'icon-btn' }, '✕')
-  closeBtn.addEventListener('click', () => overlay.remove())
+  closeBtn.addEventListener('click', () => { overlay.remove(); onChange && onChange() })
 
   // En nedladdningskontroll (progressbar + knapp) för en uppsättning id:n.
   function downloadControl(ids, storageKey) {
@@ -372,7 +408,7 @@ function openOfflineModal() {
         btn.textContent = pct + '%'
       })
       btn.disabled = false
-      if (failed === 0) { localStorage.setItem(storageKey, '1'); setDone(); sound.match() }
+      if (failed === 0) { localStorage.setItem(storageKey, '1'); setDone(); sound.match(); onChange && onChange() }
       else { btn.textContent = '⚠ Försök igen'; fill.style.width = '0%' }
     })
     return el('div', { class: 'dl-control' }, bar, btn)
