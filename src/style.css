@@ -42,6 +42,8 @@ h1, h2 { font-family: 'Press Start 2P', 'Fredoka', sans-serif; line-height: 1.35
   transition: opacity .35s ease, transform .35s ease;
 }
 .screen-enter { opacity: 0; transform: translateY(14px); }
+/* Spelplanen ska fylla exakt en skärm (ingen scroll) så brädet kan mätas rätt. */
+.screen.game { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
 
 /* ---------- Knappar ---------- */
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
@@ -67,7 +69,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .icon-btn {
   width: 46px; height: 46px; border-radius: 50%;
   background: #fff; box-shadow: 0 3px 0 rgba(0,0,0,.15);
-  font-size: 1.3rem; display: grid; place-items: center; flex: none;
+  font-size: 1.3rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+  text-align: center; flex: none; padding: 0;
   transition: transform .12s ease;
 }
 .icon-btn:active { transform: scale(.92); }
@@ -364,15 +367,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 /* ---------- Spelplan ---------- */
+.board-wrap {
+  flex: 1; min-height: 0; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px 12px calc(14px + env(safe-area-inset-bottom));
+}
 .board {
-  flex: 1; display: grid; gap: clamp(6px, 1.5vw, 14px);
+  display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
-  width: 100%; max-width: min(96vw, 820px); margin: 0 auto;
-  padding: 6px 16px calc(20px + env(safe-area-inset-bottom)); align-content: center;
+  grid-template-rows: repeat(var(--rows), 1fr);
+  gap: 8px;
+  /* Fallback innan JS hinner mäta; fitBoard() sätter sedan exakt bredd/höjd inline. */
+  width: min(90vw, 760px);
+  aspect-ratio: var(--cols) / var(--rows);
 }
 .board.locked { pointer-events: none; }
 
-.card { aspect-ratio: 1; perspective: 800px; padding: 0; background: none; animation: pop-in .4s ease both; animation-delay: var(--delay); }
+.card { perspective: 800px; padding: 0; background: none; min-width: 0; min-height: 0; animation: pop-in .4s ease both; animation-delay: var(--delay); }
 @keyframes pop-in { from { opacity: 0; transform: scale(.5) translateY(20px); } }
 
 .card-inner {

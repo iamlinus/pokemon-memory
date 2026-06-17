@@ -38,6 +38,13 @@ function clearGameTimeouts() {
   gameTimeouts = []
 }
 
+// Städfunktioner (t.ex. fönsterlyssnare) som körs när vi lämnar en skärm.
+let screenCleanups = []
+function runScreenCleanups() {
+  screenCleanups.forEach((fn) => { try { fn() } catch { /* ignore */ } })
+  screenCleanups = []
+}
+
 // --- liten DOM-hjälpare ---
 function el(tag, props = {}, ...children) {
   const e = document.createElement(tag)
@@ -59,6 +66,7 @@ function el(tag, props = {}, ...children) {
 function show(screen) {
   if (timerHandle) { clearInterval(timerHandle); timerHandle = null }
   clearGameTimeouts()
+  runScreenCleanups()
   app.innerHTML = ''
   screen.classList.add('screen-enter')
   app.append(screen)
@@ -549,9 +557,25 @@ function showGame(game) {
   const screen = el('div', { class: 'screen game' })
   const hud = el('div', { class: 'hud' })
   const board = el('div', { class: 'board' })
+  const boardWrap = el('div', { class: 'board-wrap' }, board)
   const cols = columnsFor(game.cards.length)
+  const rows = Math.ceil(game.cards.length / cols)
   board.style.setProperty('--cols', cols)
+  board.style.setProperty('--rows', rows)
   if (config.shiny && config.method !== 'gigantamax') board.classList.add('shiny')
+
+  // Räkna ut kvadratisk kortstorlek som ryms i BÅDE bredd och höjd → ingen scroll.
+  function fitBoard() {
+    const cs = getComputedStyle(boardWrap)
+    const W = boardWrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+    const H = boardWrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
+    if (W <= 0 || H <= 0) return
+    const gap = Math.max(4, Math.min(12, Math.round(W * 0.015)))
+    const cell = Math.floor(Math.min((W - (cols - 1) * gap) / cols, (H - (rows - 1) * gap) / rows))
+    board.style.gap = gap + 'px'
+    board.style.width = cell * cols + (cols - 1) * gap + 'px'
+    board.style.height = cell * rows + (rows - 1) * gap + 'px'
+  }
 
   let startTime = null
   const timeEl = el('span', { class: 'stat-value' }, '0:00')
@@ -678,8 +702,17 @@ function showGame(game) {
   }
 
   renderHud()
-  screen.append(hud, board)
+  screen.append(hud, boardWrap)
   show(screen)
+
+  // Anpassa kortstorleken till skärmen, och på nytt vid rotation/storleksändring.
+  requestAnimationFrame(fitBoard)
+  window.addEventListener('resize', fitBoard)
+  window.addEventListener('orientationchange', fitBoard)
+  screenCleanups.push(() => {
+    window.removeEventListener('resize', fitBoard)
+    window.removeEventListener('orientationchange', fitBoard)
+  })
 }
 
 // =================== RESULTAT ===================
