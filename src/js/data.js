@@ -37,6 +37,21 @@ export const GENERATIONS = [
 
 export const MAX_DEX = 1025
 
+// Gigantamax-former (id i PokeAPI + basnamn). 33 st distinkta former.
+export const GMAX_FORMS = [
+  { id: 10195, name: 'venusaur' }, { id: 10196, name: 'charizard' }, { id: 10197, name: 'blastoise' },
+  { id: 10198, name: 'butterfree' }, { id: 10199, name: 'pikachu' }, { id: 10200, name: 'meowth' },
+  { id: 10201, name: 'machamp' }, { id: 10202, name: 'gengar' }, { id: 10203, name: 'kingler' },
+  { id: 10204, name: 'lapras' }, { id: 10205, name: 'eevee' }, { id: 10206, name: 'snorlax' },
+  { id: 10207, name: 'garbodor' }, { id: 10208, name: 'melmetal' }, { id: 10209, name: 'rillaboom' },
+  { id: 10210, name: 'cinderace' }, { id: 10211, name: 'inteleon' }, { id: 10212, name: 'corviknight' },
+  { id: 10213, name: 'orbeetle' }, { id: 10214, name: 'drednaw' }, { id: 10215, name: 'coalossal' },
+  { id: 10216, name: 'flapple' }, { id: 10217, name: 'appletun' }, { id: 10218, name: 'sandaconda' },
+  { id: 10219, name: 'toxtricity' }, { id: 10220, name: 'centiskorch' }, { id: 10221, name: 'hatterene' },
+  { id: 10222, name: 'grimmsnarl' }, { id: 10223, name: 'alcremie' }, { id: 10224, name: 'copperajah' },
+  { id: 10225, name: 'duraludon' }, { id: 10226, name: 'urshifu' }, { id: 10227, name: 'urshifu' },
+]
+
 // Antal par man kan välja med svårighetsetikett.
 export const PAIR_OPTIONS = [
   { pairs: 4,  label: 'Mini',   hint: '8 brickor' },

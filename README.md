@@ -5,15 +5,17 @@ Installerbar **PWA** som fungerar **offline på iPad** efter första laddningen.
 
 ## Funktioner
 
-- **1 spelare** – med tidtagning och personligt rekord per svårighetsgrad.
-- **2 spelare** – med poängjakt, turindikator och vinnarfanfar.
+- **1 spelare** – med tidtagning och **lokal topplista** (topp 10 per antal brickor, sparas på enheten – ingen databas).
+- **2 spelare** – med poängjakt, turindikator, vinnarfanfar och **spelarbyte-spärr** (låser skärmen och visar nästa spelare).
 - **Namn** matas in i VERSALER.
-- **Antal brickor**: 4 → 18 par (Mini till Mästare).
-- **Välj Pokémon** på fyra sätt:
+- **Antal brickor**: 8 → 36 brickor.
+- **Välj Pokémon** på fem sätt:
   - 🎲 **Slumpa** ur hela Pokédexen (1025 st)
   - 🔥 **Välj typ** (eld, vatten, gräs …)
   - 🌍 **Generation** (Kanto → Paldea)
   - ✋ **Välj själv** i en sökbar väljare med alla Pokémon
+  - 💥 **Gigantamax** – de 33 gigantiska Gmax-formerna
+- ✨ **Shiny-läge** – byt till de glänsande shiny-varianterna med ett klick.
 - Massor av animationer: kort som vänds i 3D, matchglöd, skak vid fel, konfetti och syntetiska ljud (med ljud av/på).
 - **Pokéboll-baksida** ritad helt i CSS – knivskarp i alla storlekar.
 - Helt offline: bilder och API-svar cachas av en service worker vid första spelet.

@@ -4,6 +4,7 @@ import { buildPool, getAllPokemon, spriteUrl, preloadImages, cacheSprites, idsFo
 import { createGame, columnsFor, formatTime } from './game.js'
 import { sound } from './sound.js'
 import { confettiBurst } from './confetti.js'
+import { addScore, getScoresFor } from './scores.js'
 
 const app = document.getElementById('app')
 
@@ -16,6 +17,7 @@ const config = {
   type: 'fire',
   gen: 1,
   manualIds: [],
+  shiny: false,
 }
 
 let timerHandle = null
@@ -82,9 +84,11 @@ export function screenSetup() {
 
   const offlineBtn = el('button', { class: 'icon-btn', title: 'Ladda ner för offline', 'aria-label': 'Ladda ner för offline' }, '⤓')
   offlineBtn.addEventListener('click', () => { sound.unlock(); openOfflineModal(renderBanner) })
+  const scoresBtn = el('button', { class: 'icon-btn', title: 'Topplista', 'aria-label': 'Topplista' }, '🏆')
+  scoresBtn.addEventListener('click', () => { sound.unlock(); openScoresModal() })
   const header = el('header', { class: 'app-header' },
     el('div', { class: 'logo' }, el('span', { class: 'pokeball-mini' }), el('h1', {}, 'Pokémon Memory')),
-    el('div', { class: 'header-btns' }, offlineBtn, muteButton()),
+    el('div', { class: 'header-btns' }, scoresBtn, offlineBtn, muteButton()),
   )
 
   // Offline-banner/status högst upp – tips första gången, annars vad som är nedladdat.
@@ -171,6 +175,7 @@ export function screenSetup() {
     { id: 'type', icon: '🔥', label: 'Välj typ' },
     { id: 'generation', icon: '🌍', label: 'Generation' },
     { id: 'manual', icon: '✋', label: 'Välj själv' },
+    { id: 'gigantamax', icon: '💥', label: 'Gigantamax' },
   ]
   const methodBtns = methods.map((m) =>
     el('button', { class: 'method-btn' + (config.method === m.id ? ' selected' : ''), dataset: { method: m.id } },
@@ -235,9 +240,12 @@ export function screenSetup() {
       pickBtn.addEventListener('click', () => openManualPicker(() => { renderPreview(); validate() }))
       methodPanel.append(pickBtn, preview)
       renderPreview()
+    } else if (config.method === 'gigantamax') {
+      methodPanel.append(el('p', { class: 'hint-text' }, '💥 De gigantiska Gigantamax-formerna! (Shiny finns inte för dessa.)'))
     } else {
       methodPanel.append(el('p', { class: 'hint-text' }, '🎲 Helt slumpade Pokémon ur hela Pokédexen.'))
     }
+    updateShinyToggle()
   }
 
   const startBtn = el('button', { class: 'btn-primary start-btn' }, '▶  Starta spelet')
@@ -259,6 +267,26 @@ export function screenSetup() {
     startError.textContent = ok ? '' : msg
   }
 
+  // -- Shiny-läge (omställare) --
+  const shinyToggle = el('button', { class: 'shiny-toggle', role: 'switch' },
+    el('span', { class: 'shiny-label' }, '✨ Shiny-läge'),
+    el('span', { class: 'shiny-switch' }, el('span', { class: 'shiny-knob' })),
+  )
+  function updateShinyToggle() {
+    const gmax = config.method === 'gigantamax'
+    const on = config.shiny && !gmax
+    shinyToggle.classList.toggle('on', on)
+    shinyToggle.classList.toggle('disabled', gmax)
+    shinyToggle.setAttribute('aria-checked', String(on))
+    shinyToggle.disabled = gmax
+  }
+  shinyToggle.addEventListener('click', () => {
+    if (config.method === 'gigantamax') return
+    config.shiny = !config.shiny
+    sound.click()
+    updateShinyToggle()
+  })
+
   renderNames()
   renderMethodPanel()
 
@@ -269,7 +297,7 @@ export function screenSetup() {
       bannerSlot,
       el('section', { class: 'card-section' }, el('h2', {}, 'Spelare'), el('div', { class: 'mode-row' }, modeBtns), namesWrap),
       el('section', { class: 'card-section' }, el('h2', {}, 'Antal brickor'), el('div', { class: 'chip-row' }, pairChips)),
-      el('section', { class: 'card-section' }, el('h2', {}, 'Vilka Pokémon?'), el('div', { class: 'method-row' }, methodBtns), methodPanel),
+      el('section', { class: 'card-section' }, el('h2', {}, 'Vilka Pokémon?'), el('div', { class: 'method-row' }, methodBtns), methodPanel, shinyToggle),
     ),
     el('footer', { class: 'setup-footer' }, startError, startBtn),
   )
@@ -435,6 +463,55 @@ function openOfflineModal(onChange) {
   document.body.append(overlay)
 }
 
+// =================== TOPPLISTA ===================
+function openScoresModal() {
+  const overlay = el('div', { class: 'overlay' })
+  const panel = el('div', { class: 'picker scores-panel' })
+  const closeBtn = el('button', { class: 'icon-btn' }, '✕')
+  closeBtn.addEventListener('click', () => overlay.remove())
+  const tabs = el('div', { class: 'picker-tabs' })
+  const list = el('div', { class: 'scores-list' })
+  let activePairs = config.pairs
+
+  function renderList() {
+    list.innerHTML = ''
+    const scores = getScoresFor(activePairs)
+    if (!scores.length) {
+      list.append(el('p', { class: 'hint-text' }, 'Inga tider än – spela en runda i 1-spelarläget! 🧍'))
+      return
+    }
+    scores.forEach((s, i) => {
+      const medal = ['🥇', '🥈', '🥉'][i] || i + 1 + '.'
+      list.append(el('div', { class: 'score-line' + (i < 3 ? ' top' : '') },
+        el('span', { class: 'score-rank' }, medal),
+        el('span', { class: 'score-pname' }, s.name),
+        el('span', { class: 'score-time' }, formatTime(s.timeMs)),
+        el('span', { class: 'score-moves' }, s.moves + ' drag'),
+      ))
+    })
+  }
+
+  PAIR_OPTIONS.forEach((opt) => {
+    const t = el('button', { class: 'tab' + (opt.pairs === activePairs ? ' active' : '') }, String(opt.pairs * 2))
+    t.addEventListener('click', () => {
+      activePairs = opt.pairs
+      tabs.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === t))
+      renderList()
+    })
+    tabs.append(t)
+  })
+
+  panel.append(
+    el('div', { class: 'picker-head' }, el('h2', {}, '🏆 Topplista'), closeBtn),
+    el('p', { class: 'hint-text' }, 'Snabbaste tiderna i 1-spelarläget, per antal brickor.'),
+    tabs,
+    el('div', { class: 'picker-scroll' }, list),
+  )
+  overlay.append(panel)
+  document.body.append(overlay)
+  renderList()
+}
+
 // =================== LADDNING ===================
 function showLoading() {
   const screen = el('div', { class: 'screen loading-screen' },
@@ -474,6 +551,7 @@ function showGame(game) {
   const board = el('div', { class: 'board' })
   const cols = columnsFor(game.cards.length)
   board.style.setProperty('--cols', cols)
+  if (config.shiny && config.method !== 'gigantamax') board.classList.add('shiny')
 
   let startTime = null
   const timeEl = el('span', { class: 'stat-value' }, '0:00')
@@ -611,10 +689,19 @@ function showResult(game, elapsedMs) {
   const card = el('div', { class: 'result-card' })
 
   if (res.single) {
-    const bestKey = `pm_best_${game.totalPairs}`
-    const prevBest = Number(localStorage.getItem(bestKey) || 0)
-    const isRecord = !prevBest || elapsedMs < prevBest
-    if (isRecord) localStorage.setItem(bestKey, String(Math.round(elapsedMs)))
+    const placement = addScore(game.totalPairs, {
+      name: game.players[0].name,
+      timeMs: Math.round(elapsedMs),
+      moves: game.moves,
+      ts: Date.now(),
+    })
+    let badge
+    if (placement === 0) badge = el('p', { class: 'record-badge' }, '⭐ Nytt rekord!')
+    else if (placement > 0) badge = el('p', { class: 'record-badge' }, `🏅 #${placement + 1} på topplistan!`)
+    else badge = el('p', { class: 'hint-text' }, 'Bra kämpat! 💪')
+
+    const viewScores = el('button', { class: 'btn-secondary' }, '🏆 Visa topplista')
+    viewScores.addEventListener('click', () => { sound.click(); openScoresModal() })
 
     card.append(
       el('div', { class: 'trophy' }, '🏆'),
@@ -624,9 +711,8 @@ function showResult(game, elapsedMs) {
         el('div', { class: 'rstat' }, el('span', { class: 'stat-label' }, 'Tid'), el('strong', {}, formatTime(elapsedMs))),
         el('div', { class: 'rstat' }, el('span', { class: 'stat-label' }, 'Drag'), el('strong', {}, String(game.moves))),
       ),
-      isRecord
-        ? el('p', { class: 'record-badge' }, '⭐ Nytt rekord!')
-        : el('p', { class: 'hint-text' }, 'Bästa tid: ' + formatTime(prevBest)),
+      badge,
+      viewScores,
     )
   } else {
     const [p1, p2] = res.players

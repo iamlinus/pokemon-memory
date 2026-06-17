@@ -1,13 +1,15 @@
 // PokeAPI-lager. Hämtar Pokémon-listor och bygger bildadresser.
 // Allt cachas av service workern (se vite.config.js) → fungerar offline efter första laddningen.
 
-import { GENERATIONS, MAX_DEX } from './data.js'
+import { GENERATIONS, MAX_DEX, GMAX_FORMS } from './data.js'
 
 const API = 'https://pokeapi.co/api/v2'
+const ARTWORK = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork'
 
 // Officiell artwork – tydliga, färgglada bilder, perfekta för memory.
-export function spriteUrl(id) {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+// shiny=true ger den glänsande varianten.
+export function spriteUrl(id, shiny = false) {
+  return shiny ? `${ARTWORK}/shiny/${id}.png` : `${ARTWORK}/${id}.png`
 }
 
 // id från en PokeAPI-resursadress, t.ex. ".../pokemon/25/" → 25
@@ -62,10 +64,16 @@ function rangeIds(from, to) {
 }
 
 // Bygg själva korthögen: returnerar [{id, name, image}] med längd = pairs.
-// config: { method: 'random'|'type'|'generation'|'manual', pairs, type?, gen?, manualIds? }
+// config: { method: 'random'|'type'|'generation'|'manual'|'gigantamax', pairs, type?, gen?, manualIds?, shiny? }
 export async function buildPool(config) {
   const { method, pairs } = config
   let chosen = []
+
+  if (method === 'gigantamax') {
+    // Gmax-former har egen artwork men ingen shiny-variant → alltid normal bild.
+    const picks = sampleUnique(GMAX_FORMS, pairs)
+    return picks.map((p) => ({ id: p.id, name: p.name, image: spriteUrl(p.id, false) }))
+  }
 
   if (method === 'manual') {
     const ids = (config.manualIds || []).slice(0, pairs)
@@ -86,7 +94,7 @@ export async function buildPool(config) {
     chosen = ids.map((id) => ({ id, name: all.find((p) => p.id === id)?.name ?? `#${id}` }))
   }
 
-  return chosen.map((p) => ({ id: p.id, name: p.name, image: spriteUrl(p.id) }))
+  return chosen.map((p) => ({ id: p.id, name: p.name, image: spriteUrl(p.id, !!config.shiny) }))
 }
 
 // Hämta och cacha en lista med sprites (för medvetet offline-nedladdning).

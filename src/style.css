@@ -117,6 +117,29 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .tip-dl:active { transform: translateY(2px); }
 .tip-x { flex: none; width: 30px; height: 30px; border-radius: 50%; color: #999; font-size: 1rem; }
 
+/* ---------- Shiny-omställare ---------- */
+.shiny-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  margin-top: 12px; padding: 12px 16px; border-radius: 14px; background: #fff; font-weight: 600; font-size: 1rem;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .1); transition: box-shadow .2s ease, background .2s ease;
+}
+.shiny-toggle.on { background: linear-gradient(135deg, #fff, #fff0fb); box-shadow: 0 0 0 2px var(--yellow), 0 3px 0 rgba(0, 0, 0, .1); }
+.shiny-toggle.disabled { opacity: .45; }
+.shiny-label { display: flex; align-items: center; gap: 6px; }
+.shiny-switch { position: relative; width: 52px; height: 30px; border-radius: 999px; background: #ddd; flex: none; transition: background .2s ease; }
+.shiny-toggle.on .shiny-switch { background: var(--yellow); }
+.shiny-knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: transform .2s ease; }
+.shiny-toggle.on .shiny-knob { transform: translateX(22px); }
+
+/* ---------- Topplista ---------- */
+.scores-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; }
+.score-line { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 12px; padding: 10px 14px; box-shadow: 0 2px 6px rgba(0, 0, 0, .08); }
+.score-line.top { background: linear-gradient(135deg, #fff, #fffae6); }
+.score-rank { font-weight: 700; font-size: 1.1rem; width: 34px; text-align: center; flex: none; }
+.score-pname { flex: 1; font-weight: 700; letter-spacing: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-time { font-weight: 700; color: var(--blue-dark); }
+.score-moves { color: #999; font-size: .85rem; width: 64px; text-align: right; flex: none; }
+
 /* ---------- Offline-nedladdning ---------- */
 .offline-panel .hint-text { text-align: left; margin: 4px 0 12px; }
 .offline-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
@@ -381,6 +404,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-size: clamp(.55rem, 1.5vw, .8rem); font-weight: 700; color: var(--blue-dark);
   text-align: center; line-height: 1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* Shiny-läge: gyllene kort + glittrande stjärna */
+.board.shiny .card-front { background: linear-gradient(160deg, #fffdf5, #fff0fb); border-color: #ffd24a; }
+.board.shiny .card-front::before {
+  content: '✨'; position: absolute; top: 3px; right: 6px; font-size: .9rem;
+  animation: sparkle 1.6s ease-in-out infinite;
+}
+.board.shiny .card-inner.is-matched .card-front {
+  border-color: #ffd24a;
+  box-shadow: 0 0 0 3px rgba(255, 210, 74, .7), 0 0 26px rgba(255, 210, 74, .8);
+}
+@keyframes sparkle { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2); } }
 
 .card-inner.is-matched { animation: matched-pop .5s ease; }
 .card-inner.is-matched .card-front {
